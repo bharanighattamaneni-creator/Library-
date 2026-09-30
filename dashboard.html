@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Library Dashboard</title>
+    <link rel="stylesheet" th:href="@{/style.css}">
+</head>
+<body>
+<header class="topbar">
+    <div>
+        <h1>📚 Library Management</h1>
+        <span>Spring Boot • JDBC • PostgreSQL</span>
+    </div>
+    <a class="logout" href="/">Logout</a>
+</header>
+
+<main class="container">
+    <div th:if="${message}" class="alert error" th:text="${message}"></div>
+
+    <section class="cards">
+        <div class="stat"><span>Books</span><strong th:text="${#lists.size(books)}">0</strong></div>
+        <div class="stat"><span>Members</span><strong th:text="${#lists.size(members)}">0</strong></div>
+        <div class="stat"><span>Issue Records</span><strong th:text="${#lists.size(issued)}">0</strong></div>
+    </section>
+
+    <section class="grid">
+        <div class="panel">
+            <h2>Add Book</h2>
+            <form action="/books/add" method="post">
+                <input name="title" placeholder="Book title" required>
+                <input name="author" placeholder="Author" required>
+                <input name="category" placeholder="Category">
+                <input name="quantity" type="number" min="1" placeholder="Quantity" required>
+                <button class="primary" type="submit">Add Book</button>
+            </form>
+        </div>
+
+        <div class="panel">
+            <h2>Add Member</h2>
+            <form action="/members/add" method="post">
+                <input name="name" placeholder="Member name" required>
+                <input name="email" type="email" placeholder="Email">
+                <input name="phone" placeholder="Phone">
+                <button class="primary" type="submit">Add Member</button>
+            </form>
+        </div>
+
+        <div class="panel">
+            <h2>Issue Book</h2>
+            <form action="/issue" method="post">
+                <select name="bookId" required>
+                    <option value="">Select available book</option>
+                    <option th:each="b : ${books}"
+                            th:if="${b.available_quantity > 0}"
+                            th:value="${b.id}"
+                            th:text="${b.title + ' (' + b.available_quantity + ' available)'}"></option>
+                </select>
+
+                <select name="memberId" required>
+                    <option value="">Select member</option>
+                    <option th:each="m : ${members}"
+                            th:value="${m.id}"
+                            th:text="${m.name}"></option>
+                </select>
+
+                <input name="days" type="number" min="1" max="60" value="14" required>
+                <button class="primary" type="submit">Issue Book</button>
+            </form>
+            <p class="hint">Fine: ₹5 per overdue day.</p>
+        </div>
+    </section>
+
+    <section class="panel table-panel">
+        <div class="section-title">
+            <h2>Books</h2>
+            <span>Live database data</span>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                <tr><th>ID</th><th>Title</th><th>Author</th><th>Category</th><th>Qty</th><th>Available</th><th>Action</th></tr>
+                </thead>
+                <tbody>
+                <tr th:each="b : ${books}">
+                    <td th:text="${b.id}"></td>
+                    <td th:text="${b.title}"></td>
+                    <td th:text="${b.author}"></td>
+                    <td th:text="${b.category}"></td>
+                    <td th:text="${b.quantity}"></td>
+                    <td th:text="${b.available_quantity}"></td>
+                    <td>
+                        <form th:action="@{'/books/delete/' + ${b.id}}" method="post">
+                            <button class="danger small" type="submit">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(books)}"><td colspan="7">No books yet.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="panel table-panel">
+        <div class="section-title">
+            <h2>Members</h2>
+            <span>Live database data</span>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Phone</th><th>Action</th></tr></thead>
+                <tbody>
+                <tr th:each="m : ${members}">
+                    <td th:text="${m.id}"></td>
+                    <td th:text="${m.name}"></td>
+                    <td th:text="${m.email}"></td>
+                    <td th:text="${m.phone}"></td>
+                    <td>
+                        <form th:action="@{'/members/delete/' + ${m.id}}" method="post">
+                            <button class="danger small" type="submit">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(members)}"><td colspan="5">No members yet.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="panel table-panel">
+        <div class="section-title">
+            <h2>Issued / Returned Books</h2>
+            <span>Fine is calculated by JDBC transaction</span>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                <tr><th>Book</th><th>Member</th><th>Issue Date</th><th>Due Date</th><th>Return Date</th><th>Fine</th><th>Action</th></tr>
+                </thead>
+                <tbody>
+                <tr th:each="i : ${issued}">
+                    <td th:text="${i.book_title}"></td>
+                    <td th:text="${i.member_name}"></td>
+                    <td th:text="${i.issue_date}"></td>
+                    <td th:text="${i.due_date}"></td>
+                    <td th:text="${i.return_date != null ? i.return_date : 'Not returned'}"></td>
+                    <td th:text="'₹' + ${i.fine}"></td>
+                    <td>
+                        <form th:if="${i.return_date == null}" th:action="@{'/return/' + ${i.id}}" method="post">
+                            <button class="primary small" type="submit">Return</button>
+                        </form>
+                        <span th:if="${i.return_date != null}" class="returned">Returned</span>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(issued)}"><td colspan="7">No issue records yet.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+</main>
+</body>
+</html>

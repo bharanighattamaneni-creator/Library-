@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Library Login</title>
+    <link rel="stylesheet" th:href="@{/style.css}">
+</head>
+<body class="login-page">
+<div class="login-card">
+    <div class="logo">📚</div>
+    <h1>Library Management</h1>
+    <p class="muted">JDBC + Spring Boot + PostgreSQL</p>
+
+    <div th:if="${error}" class="alert error" th:text="${error}"></div>
+
+    <form action="/login" method="post">
+        <label>Username</label>
+        <input type="text" name="username" placeholder="Enter username" required>
+
+        <label>Password</label>
+        <input type="password" name="password" placeholder="Enter password" required>
+
+        <button class="primary full" type="submit">Login</button>
+    </form>
+
+    <div class="demo-box">
+        Demo login: <strong>admin</strong> / <strong>admin123</strong>
+    </div>
+</div>
+</body>
+</html>
